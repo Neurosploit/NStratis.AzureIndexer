@@ -116,13 +116,16 @@ namespace NBitcoin.Indexer
             if(first == null)
                 yield break;
             var height = first.Height;
-            if(first.Height == 1)
-            {
-                headers = new[] { fork }.Concat(headers);
-                height = 0;
-            }
+            
+            // todo: doesn't work with node.getblocks since block 0(hash=0000066e91e46e5a264d42c89e1204963b2ee6be230b443e9159020539d972af) is never returned.
+            // if (first.Height == 1)
+            // {
+            //     
+            //     headers = new[] { fork }.Concat(headers);
+            //     height = 0;
+            // }
 
-            foreach(var block in _BlocksRepository.GetBlocks(headers.Select(b => b.HashBlock), CancellationToken).TakeWhile(b => b != null))
+            foreach (var block in _BlocksRepository.GetBlocks(headers.Select(b => b.HashBlock), CancellationToken).TakeWhile(b => b != null))
             {
                 var header = _BlockHeaders.GetBlock(height);
                 _LastProcessed = header;

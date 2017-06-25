@@ -52,8 +52,11 @@ namespace NBitcoin.Indexer
             var key = GetValue("Azure.Key", true);
             config.StorageCredentials = new StorageCredentials(account, key);
             config.StorageNamespace = GetValue("StorageNamespace", false);
-            var network = GetValue("Bitcoin.Network", false) ?? "Main";
-            config.Network = Network.GetNetwork(network);
+            var network = GetValue("Bitcoin.Network", false) ?? "Main";            
+            if (network.ToLowerInvariant() == "stratismain")
+                config.Network = Network.StratisMain;
+            else
+                config.Network = Network.GetNetwork(network);
             if (config.Network == null)
                 throw new ConfigurationErrorsException("Invalid value " + network + " in appsettings (expecting Main, Test or Seg)");
             config.Node = GetValue("Node", false);
@@ -99,7 +102,13 @@ namespace NBitcoin.Indexer
         {
             if (String.IsNullOrEmpty(Node))
                 throw new ConfigurationErrorsException("Node setting is not configured");
-            return NBitcoin.Protocol.Node.Connect(Network, Node, isRelay: isRelay);
+            var node = NBitcoin.Protocol.Node.Connect(Network, Node, isRelay: isRelay);
+
+            // TODO: fullnode doesn't handle requesting data with TransactionOptions.All yet in their GetDataPayload methods. 
+            // i.e. going from InventoryType.MSG_TX etc. to InventoryType.MSG_WITNESS_TX.
+            // This option disables that for the node connection.
+            node.PreferredTransactionOptions = TransactionOptions.None;
+            return node;
         }
 
         public string Node
