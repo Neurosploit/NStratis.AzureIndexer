@@ -45,16 +45,8 @@ namespace NBitcoin.Indexer
         {
             if (stream.Length == 0)
                 return null;
-            var buffer = stream.GetBuffer();
-            Array.Resize(ref buffer, (int)stream.Length);
-            return buffer;
-        }
-        internal static void SetThrottling()
-        {
-            ServicePointManager.UseNagleAlgorithm = false;
-            ServicePointManager.Expect100Continue = false;
-            ServicePointManager.DefaultConnectionLimit = 1000;
-        }
+            return stream.ToArray();
+        }      
 
         public static bool TryAdd<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, TValue value)
         {

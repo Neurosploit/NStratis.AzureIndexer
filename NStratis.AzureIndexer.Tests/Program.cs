@@ -23,22 +23,13 @@ namespace NBitcoin.Indexer.Tests
             //Azure();
             //SqlLite();
             new TestClass().Play();
-        }
-
-     
-
-        internal static void SetThrottling()
-        {
-            ServicePointManager.UseNagleAlgorithm = false;
-            ServicePointManager.Expect100Continue = false;
-            ServicePointManager.DefaultConnectionLimit = 100;
-        }
+        }    
+        
         private static void Azure()
         {
-            SetThrottling();
-            var client = IndexerConfiguration.FromConfiguration().CreateBlobClient();
+            var client = IndexerConfiguration.FromConfiguration("LocalSettings.config").CreateBlobClient();
             var container = client.GetContainerReference("throughput2");
-            container.CreateIfNotExists();
+            container.CreateIfNotExistsAsync().Wait();
             int count = 0;
 
             var threads = Enumerable.Range(0, 30).Select(_ => new Thread(__ =>
@@ -54,7 +45,7 @@ namespace NBitcoin.Indexer.Tests
                     var blobReference = container.GetBlockBlobReference(blobName);
 
                     // Upload the word "hello" from a Memory Stream.
-                    blobReference.UploadFromStream(testStream);
+                    blobReference.UploadFromStreamAsync(testStream).Wait();
 
                     // Increment my stat-counter.
                     Interlocked.Increment(ref count);

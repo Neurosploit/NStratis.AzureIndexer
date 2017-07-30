@@ -55,17 +55,19 @@ namespace Build
 		{
 			CloudBlobClient client = new CloudBlobClient(new StorageUri(new Uri(Uri)), new StorageCredentials(AccountName, KeyValue));
 			var container =client.GetContainerReference(Container);
-			if(!container.Exists())
-			{
+            var existsTask = container.ExistsAsync();
+            existsTask.Wait();
+            if (!existsTask.Result)
+            {
 				Log.LogError("Container " + Container + " not found");
 				return false;
 			}
 			var blob = container.GetBlockBlobReference(BlobName);
-			blob.UploadFromFile(File, System.IO.FileMode.Open);
-			blob.Properties.CacheControl = "no-cache";
+            blob.UploadFromFileAsync(File).Wait();
+            blob.Properties.CacheControl = "no-cache";
 			blob.Properties.ContentType = "application/octet-stream";
 			blob.Properties.ContentDisposition = "attachment; filename=\""+ Path.GetFileName(File) +"\"";
-			blob.SetProperties();
+			blob.SetPropertiesAsync().Wait();
 			return true;
 		}
 	}

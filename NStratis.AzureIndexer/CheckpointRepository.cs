@@ -50,7 +50,9 @@ namespace NBitcoin.Indexer
         public Task<Checkpoint[]> GetCheckpointsAsync()
         {
             List<Task<Checkpoint>> checkpoints = new List<Task<Checkpoint>>();
-            foreach (var blob in _Container.ListBlobs("Checkpoints/" + GetSetPart(), true, BlobListingDetails.None).OfType<CloudBlockBlob>())
+            var task = _Container.ListBlobsSegmentedAsync("Checkpoints/" + GetSetPart(), true, BlobListingDetails.None, null, new BlobContinuationToken(), new BlobRequestOptions(), new Microsoft.WindowsAzure.Storage.OperationContext());
+            task.Wait();
+            foreach (var blob in task.Result.Results.OfType<CloudBlockBlob>())
             {
                 checkpoints.Add(Checkpoint.LoadBlobAsync(blob, _Network));
             }

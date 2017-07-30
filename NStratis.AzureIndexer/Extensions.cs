@@ -135,7 +135,8 @@ namespace NBitcoin.Indexer
             {
                 // Create an entry writer to write a top-level entry to the message.
                 ODataWriter entryWriter = messageWriter.CreateODataEntryWriter();
-                var writeODataEntity = typeof(TableConstants).Assembly.GetType("Microsoft.WindowsAzure.Storage.Table.Protocol.TableOperationHttpWebRequestFactory")
+                var writeODataEntity = typeof(TableErrorCodeStrings).GetTypeInfo().Assembly.GetType("Microsoft.WindowsAzure.Storage.Table.Protocol.TableOperationHttpRequestMessageFactory")
+                    .GetTypeInfo()
                     .GetMethod("WriteOdataEntity", BindingFlags.NonPublic | BindingFlags.Static);
 
                 writeODataEntity.Invoke(null, new object[] { entity, TableOperationType.Insert, null, entryWriter });
@@ -155,7 +156,8 @@ namespace NBitcoin.Indexer
             }))
             {
                 ODataReader reader = messageReader.CreateODataEntryReader();
-                var readAndUpdateTableEntity = typeof(TableConstants).Assembly.GetType("Microsoft.WindowsAzure.Storage.Table.Protocol.TableOperationHttpResponseParsers")
+                var readAndUpdateTableEntity = typeof(TableErrorCodeStrings).GetTypeInfo().Assembly.GetType("Microsoft.WindowsAzure.Storage.Table.Protocol.TableOperationHttpResponseParsers")
+                    .GetTypeInfo()
                     .GetMethod("ReadAndUpdateTableEntity", BindingFlags.NonPublic | BindingFlags.Static);
                 reader.Read();
                 readAndUpdateTableEntity.Invoke(null, new object[] { entity, reader.Item, 31, null });

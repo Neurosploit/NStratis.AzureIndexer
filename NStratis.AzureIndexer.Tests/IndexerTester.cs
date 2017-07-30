@@ -1,4 +1,5 @@
-﻿using Microsoft.WindowsAzure.Storage.Blob;
+﻿using Microsoft.WindowsAzure.Storage;
+using Microsoft.WindowsAzure.Storage.Blob;
 using Microsoft.WindowsAzure.Storage.Table;
 using NBitcoin.Protocol;
 using System;
@@ -24,7 +25,7 @@ namespace NBitcoin.Indexer.Tests
         public IndexerTester(string folder)
         {
             TestUtils.EnsureNew(folder);
-            var config = IndexerConfiguration.FromConfiguration();
+            var config = IndexerConfiguration.FromConfiguration("LocalSettings.config");
             config.Network = Network.TestNet;
             config.StorageNamespace = folder;
             _Importer = config.CreateIndexer();
@@ -32,10 +33,10 @@ namespace NBitcoin.Indexer.Tests
 
             foreach (var table in config.EnumerateTables())
             {
-                table.CreateIfNotExists();
+                table.CreateIfNotExistsAsync().Wait();
             }
 
-            config.GetBlocksContainer().CreateIfNotExists();
+            config.GetBlocksContainer().CreateIfNotExistsAsync().Wait();
             config.EnsureSetup();
             _Folder = folder;
         }
@@ -51,22 +52,26 @@ namespace NBitcoin.Indexer.Tests
             {
                 foreach (var table in _Importer.Configuration.EnumerateTables())
                 {
-                    table.CreateIfNotExists();
-                    var entities = table.ExecuteQuery(new TableQuery()).ToList();
+                    table.CreateIfNotExistsAsync().Wait();
+                    var queryTask = table.ExecuteQuerySegmentedAsync(new TableQuery(), new TableContinuationToken());
+                    queryTask.Wait();
+                    var entities = queryTask.Result.Results.ToList();
                     Parallel.ForEach(entities, e =>
                     {
-                        table.Execute(TableOperation.Delete(e));
+                        table.ExecuteAsync(TableOperation.Delete(e)).Wait();
                     });
                 }
                 var container = _Importer.Configuration.GetBlocksContainer();
-                var blobs = container.ListBlobs(useFlatBlobListing: true).ToList();
+                var blobListTask = container.ListBlobsSegmentedAsync(string.Empty, true, BlobListingDetails.All, null, new BlobContinuationToken(), new BlobRequestOptions(), new OperationContext());
+                blobListTask.Wait();
+                var blobs = blobListTask.Result.Results.ToList();
 
                 Parallel.ForEach(blobs, b =>
                 {
                     if (b is CloudPageBlob)
-                        ((CloudPageBlob)b).Delete();
+                        ((CloudPageBlob)b).DeleteAsync().Wait();
                     else
-                        ((CloudBlockBlob)b).Delete();
+                        ((CloudBlockBlob)b).DeleteAsync().Wait();
                 });
             }
         }

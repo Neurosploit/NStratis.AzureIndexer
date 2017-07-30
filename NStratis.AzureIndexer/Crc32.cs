@@ -64,7 +64,7 @@ namespace NBitcoin.Indexer
             protected override byte[] HashFinal()
             {
                 var hashBuffer = UInt32ToBigEndianBytes(~hash);
-                HashValue = hashBuffer;
+                // todo: enable? HashValue = hashBuffer;
                 return hashBuffer;
             }
 

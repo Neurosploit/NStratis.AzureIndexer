@@ -162,3 +162,6 @@ Build/DeployClient.proj
 /NBitcoin.Indexer/GitLink.exe
 /Build/NBitcoin.Indexer.Console.zip
 /NBitcoin.Indexer/*.nupkg
+/commandline
+/NStratis
+/commandline

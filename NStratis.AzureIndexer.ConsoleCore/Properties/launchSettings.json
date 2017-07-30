@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "NStratis.AzureIndexer.ConsoleCore": {
+      "commandName": "Project",
+      "commandLineArgs": "-s LocalSettings.config"
+    }
+  }
+}

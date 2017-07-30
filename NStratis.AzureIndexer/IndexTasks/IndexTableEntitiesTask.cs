@@ -129,11 +129,11 @@ namespace NBitcoin.Indexer.IndexTasks
                     Stopwatch watch = new Stopwatch();
                     watch.Start();
                     if (batch.Count > 1)
-                        table.ExecuteBatch(batch, options);
+                        table.ExecuteBatchAsync(batch, options, new OperationContext()).Wait();
                     else
                     {
                         if (batch.Count == 1)
-                            table.Execute(batch[0], options);
+                            table.ExecuteAsync(batch[0], options, new OperationContext()).Wait();
                     }
                     Interlocked.Add(ref _IndexedEntities, batch.Count);
                 }
@@ -155,7 +155,7 @@ namespace NBitcoin.Indexer.IndexTasks
                         Configuration
                             .GetBlocksContainer()
                             .GetBlockBlobReference(entity.GetFatBlobName())
-                            .UploadFromByteArray(serialized, 0, serialized.Length);
+                            .UploadFromByteArrayAsync(serialized, 0, serialized.Length).Wait();
                         entity.MakeFat(serialized.Length);                       
                         batches.Enqueue(batch);
                     }
@@ -172,7 +172,7 @@ namespace NBitcoin.Indexer.IndexTasks
 
         private ITableEntity GetEntity(TableOperation op)
         {
-            return (ITableEntity)typeof(TableOperation).GetProperty("Entity", BindingFlags.Instance |
+            return (ITableEntity)typeof(TableOperation).GetTypeInfo().GetProperty("Entity", BindingFlags.Instance |
                             BindingFlags.NonPublic |
                             BindingFlags.Public)
                             .GetValue(op);
