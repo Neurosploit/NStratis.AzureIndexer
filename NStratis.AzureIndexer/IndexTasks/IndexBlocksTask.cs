@@ -91,7 +91,7 @@ namespace NBitcoin.Indexer.IndexTasks
                 var blob = container.GetPageBlobReference(hash);
                 MemoryStream ms = new MemoryStream();
                 block.ReadWrite(ms, true);
-                var blockBytes = ms.GetBuffer();
+                var blockBytes = ms.ToArray();
 
                 long length = 512 - (ms.Length % 512);
                 if (length == 512)
@@ -100,7 +100,7 @@ namespace NBitcoin.Indexer.IndexTasks
 
                 try
                 {
-                    blob.UploadFromByteArray(blockBytes, 0, blockBytes.Length, new AccessCondition()
+                    blob.UploadFromByteArrayAsync(blockBytes, 0, blockBytes.Length, new AccessCondition()
                     {
                         //Will throw if already exist, save 1 call
                         IfNotModifiedSinceTime = DateTimeOffset.MinValue
@@ -108,7 +108,7 @@ namespace NBitcoin.Indexer.IndexTasks
                     {
                         MaximumExecutionTime = _Timeout,
                         ServerTimeout = _Timeout
-                    });
+                    }, new OperationContext()).Wait();
                     watch.Stop();
                     IndexerTrace.BlockUploaded(watch.Elapsed, blockBytes.Length);
                     _IndexedBlocks++;

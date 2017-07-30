@@ -1,11 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.26430.16
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NStratis.AzureIndexer", "NStratis.AzureIndexer\NStratis.AzureIndexer.csproj", "{210DE089-5D25-4967-A7A4-95B98A823DA2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NStratis.AzureIndexer", "NStratis.AzureIndexer\NStratis.AzureIndexer.csproj", "{210DE089-5D25-4967-A7A4-95B98A823DA2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NStratis.AzureIndexer.Tests", "NStratis.AzureIndexer.Tests\NStratis.AzureIndexer.Tests.csproj", "{49FC1C12-A820-440C-9859-7D392A5ABB3C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NStratis.AzureIndexer.Tests", "NStratis.AzureIndexer.Tests\NStratis.AzureIndexer.Tests.csproj", "{49FC1C12-A820-440C-9859-7D392A5ABB3C}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{292BAB67-D8C3-454A-AC94-940AEC560EAA}"
 	ProjectSection(SolutionItems) = preProject
@@ -14,14 +14,22 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{292BAB
 		.nuget\NuGet.targets = .nuget\NuGet.targets
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NStratis.AzureIndexer.Console", "NStratis.AzureIndexer.Console\NStratis.AzureIndexer.Console.csproj", "{08163004-F602-4721-A08D-83591234B560}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NStratis.AzureIndexer.Console", "NStratis.AzureIndexer.Console\NStratis.AzureIndexer.Console.csproj", "{08163004-F602-4721-A08D-83591234B560}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Build", "Build\Build.csproj", "{32493E97-CF3A-42E5-8EA1-56964E6469C8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Build", "Build\Build.csproj", "{32493E97-CF3A-42E5-8EA1-56964E6469C8}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{805F68D0-C345-4518-B919-D24F8F13272E}"
 	ProjectSection(SolutionItems) = preProject
 		README.md = README.md
 	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "External", "External", "{6880A0D5-096C-4E45-8F5F-311E70211307}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NBitcoin", "NStratis\NBitcoin\NBitcoin.csproj", "{D3247CF3-7081-4153-9DF0-164A9BBCF488}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HashLib", "NStratis\Hashing\HashLib\HashLib.csproj", "{22E8AC59-C05E-493E-9466-91912B0F3EA0}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CommandLine", "commandline\src\CommandLine\CommandLine.csproj", "{E1BD3C65-49C3-49E7-BABA-C60980CB3F20}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,8 +53,25 @@ Global
 		{32493E97-CF3A-42E5-8EA1-56964E6469C8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{32493E97-CF3A-42E5-8EA1-56964E6469C8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{32493E97-CF3A-42E5-8EA1-56964E6469C8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D3247CF3-7081-4153-9DF0-164A9BBCF488}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D3247CF3-7081-4153-9DF0-164A9BBCF488}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D3247CF3-7081-4153-9DF0-164A9BBCF488}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D3247CF3-7081-4153-9DF0-164A9BBCF488}.Release|Any CPU.Build.0 = Release|Any CPU
+		{22E8AC59-C05E-493E-9466-91912B0F3EA0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{22E8AC59-C05E-493E-9466-91912B0F3EA0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{22E8AC59-C05E-493E-9466-91912B0F3EA0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{22E8AC59-C05E-493E-9466-91912B0F3EA0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E1BD3C65-49C3-49E7-BABA-C60980CB3F20}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E1BD3C65-49C3-49E7-BABA-C60980CB3F20}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E1BD3C65-49C3-49E7-BABA-C60980CB3F20}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E1BD3C65-49C3-49E7-BABA-C60980CB3F20}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{D3247CF3-7081-4153-9DF0-164A9BBCF488} = {6880A0D5-096C-4E45-8F5F-311E70211307}
+		{22E8AC59-C05E-493E-9466-91912B0F3EA0} = {6880A0D5-096C-4E45-8F5F-311E70211307}
+		{E1BD3C65-49C3-49E7-BABA-C60980CB3F20} = {6880A0D5-096C-4E45-8F5F-311E70211307}
 	EndGlobalSection
 EndGlobal

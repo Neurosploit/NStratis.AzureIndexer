@@ -51,7 +51,7 @@ namespace NBitcoin.Indexer
             try
             {
 
-                container.GetPageBlobReference(blockId.ToString()).DownloadToStream(ms);
+                container.GetPageBlobReference(blockId.ToString()).DownloadToStreamAsync(ms).Wait();
                 ms.Position = 0;
                 Block b = new Block();
                 b.ReadWrite(ms, false);
@@ -200,7 +200,7 @@ namespace NBitcoin.Indexer
             Configuration
                     .GetBlocksContainer()
                     .GetBlockBlobReference(entity.GetFatBlobName())
-                    .UploadFromByteArray(serialized, 0, serialized.Length);
+                    .UploadFromByteArrayAsync(serialized, 0, serialized.Length).Wait();
             entity.MakeFat(serialized.Length);
             await table.ExecuteAsync(TableOperation.InsertOrReplace(entity)).ConfigureAwait(false);
         }
@@ -250,10 +250,12 @@ namespace NBitcoin.Indexer
         public ChainBlockHeader GetBestBlock()
         {
             var table = Configuration.GetChainTable();
-            var part = table.ExecuteQuery(new TableQuery()
+            var queryTask = table.ExecuteQuerySegmentedAsync(new TableQuery()
             {
                 TakeCount = 1
-            }).Select(e => new ChainPartEntry(e)).FirstOrDefault();
+            }, new TableContinuationToken());
+            queryTask.Wait();
+            var part = queryTask.Result.Results.Select(e => new ChainPartEntry(e)).FirstOrDefault();
             if(part == null)
                 return null;
 
@@ -273,7 +275,7 @@ namespace NBitcoin.Indexer
             List<ChainBlockHeader> blocks = new List<ChainBlockHeader>();
             foreach(var chainPart in
                 ExecuteBalanceQuery(table, new TableQuery(), new[] { 1, 2, 10 })
-            .Concat(table.ExecuteQuery(new TableQuery()).Skip(2))
+            .Concat(ExecuteSkipTwoTableQuery(table))
             .Select(e => new ChainPartEntry(e)))
             {
                 cancellation.ThrowIfCancellationRequested();
@@ -304,6 +306,13 @@ namespace NBitcoin.Indexer
             }
         }
 
+        private IEnumerable<DynamicTableEntity> ExecuteSkipTwoTableQuery(CloudTable table)
+        {
+            var queryTask = table.ExecuteQuerySegmentedAsync(new TableQuery(), new TableContinuationToken());
+            queryTask.Wait();
+            return queryTask.Result.Results.Skip(2);
+        }
+
         private ChainBlockHeader CreateChainChange(int height, BlockHeader block)
         {
             return new ChainBlockHeader()
@@ -321,8 +330,11 @@ namespace NBitcoin.Indexer
             var searchedEntity = new WalletRuleEntry(walletId, null).CreateTableEntity();
             var query = new TableQuery()
                                     .Where(TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, searchedEntity.PartitionKey));
-            return
-                table.ExecuteQuery(query)
+
+            var queryTask = table.ExecuteQuerySegmentedAsync(query, new TableContinuationToken());
+            queryTask.Wait();
+
+            return queryTask.Result.Results
                  .Select(e => new WalletRuleEntry(e, this))
                  .ToArray();
         }
@@ -334,7 +346,7 @@ namespace NBitcoin.Indexer
             var table = Configuration.GetWalletRulesTable();
             var entry = new WalletRuleEntry(walletId, walletRule);
             var entity = entry.CreateTableEntity();
-            table.Execute(TableOperation.InsertOrReplace(entity));
+            table.ExecuteAsync(TableOperation.InsertOrReplace(entity)).Wait();
             return entry;
         }
 
@@ -342,10 +354,13 @@ namespace NBitcoin.Indexer
 
         public WalletRuleEntryCollection GetAllWalletRules()
         {
+            var queryTask = Configuration.GetWalletRulesTable()
+                .ExecuteQuerySegmentedAsync(new TableQuery(), new TableContinuationToken());
+            queryTask.Wait();
+
             return
                 new WalletRuleEntryCollection(
-                Configuration.GetWalletRulesTable()
-                .ExecuteQuery(new TableQuery())
+                queryTask.Result.Results
                 .Select(e => new WalletRuleEntry(e, this)));
         }
 
@@ -541,7 +556,9 @@ namespace NBitcoin.Indexer
             do
             {
                 tableQuery.TakeCount = pagesEnumerator.MoveNext() ? (int?)pagesEnumerator.Current : null;
-                var segment = table.ExecuteQuerySegmented(tableQuery, continuation);
+                var segmentTask = table.ExecuteQuerySegmentedAsync(tableQuery, continuation);
+                segmentTask.Wait();
+                var segment = segmentTask.Result;
                 continuation = segment.ContinuationToken;
                 foreach(var entity in segment)
                 {
@@ -577,7 +594,10 @@ namespace NBitcoin.Indexer
         {
             var table = Configuration.GetBalanceTable();
             List<DynamicTableEntity> unconfirmed = new List<DynamicTableEntity>();
-            foreach(var c in table.ExecuteQuery(new BalanceQuery().CreateTableQuery(new BalanceId(scriptPubKey))))
+
+            var tableQueryTask = table.ExecuteQuerySegmentedAsync(new BalanceQuery().CreateTableQuery(new BalanceId(scriptPubKey)),new TableContinuationToken());
+            tableQueryTask.Wait();
+            foreach (var c in tableQueryTask.Result.Results)
             {
                 var change = new OrderedBalanceChange(c);
                 if(change.BlockId != null)
@@ -591,7 +611,7 @@ namespace NBitcoin.Indexer
             {
                 var t = Configuration.GetBalanceTable();
                 c.ETag = "*";
-                t.Execute(TableOperation.Delete(c));
+                t.ExecuteAsync(TableOperation.Delete(c)).Wait();
             });
         }
 
@@ -658,7 +678,7 @@ namespace NBitcoin.Indexer
             Parallel.ForEach(balances, b =>
             {
                 var table = Configuration.GetBalanceTable();
-                table.Execute(TableOperation.Delete(b.ToEntity()));
+                table.ExecuteAsync(TableOperation.Delete(b.ToEntity())).Wait();
             });
         }
 

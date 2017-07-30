@@ -1,0 +1,6 @@
+[submodule "NStratis"]
+	path = NStratis
+	url = git://github.com/Neurosploit/NStratis
+[submodule "commandline"]
+	path = commandline
+	url = git://github.com/Neurosploit/commandline

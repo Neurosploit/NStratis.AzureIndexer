@@ -12,11 +12,11 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Runtime.ExceptionServices;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -34,9 +34,9 @@ namespace NBitcoin.Indexer
     }
     public class AzureIndexer
     {
-        public static AzureIndexer CreateIndexer()
+        public static AzureIndexer CreateIndexer(string configurationFile)
         {
-            var config = IndexerConfiguration.FromConfiguration();
+            var config = IndexerConfiguration.FromConfiguration(configurationFile);
             return config.CreateIndexer();
         }
 
@@ -83,14 +83,7 @@ namespace NBitcoin.Indexer
             if(IgnoreCheckpoints)
                 chk = new Checkpoint(chk.CheckpointName, Configuration.Network, null, null);
             return chk;
-        }
-
-        private void SetThrottling()
-        {
-            Helper.SetThrottling();
-            ServicePoint tableServicePoint = ServicePointManager.FindServicePoint(Configuration.CreateTableClient().BaseUri);
-            tableServicePoint.ConnectionLimit = 1000;
-        }
+        }       
 
         private void PushTransactions(MultiValueDictionary<string, TransactionEntry.Entity> buckets,
                                         IEnumerable<TransactionEntry.Entity> indexedTransactions,
@@ -380,15 +373,15 @@ namespace NBitcoin.Indexer
             {
                 batch.Add(TableOperation.InsertOrReplace(entry.ToEntity()));
                 if(batch.Count == 100)
-                {
-                    table.ExecuteBatch(batch);
+                {                    
+                    table.ExecuteBatchAsync(batch).Wait();
                     batch = new TableBatchOperation();
                 }
                 IndexerTrace.RemainingBlockChain(entry.ChainOffset, last.ChainOffset + last.BlockHeaders.Count - 1);
             }
             if(batch.Count > 0)
             {
-                table.ExecuteBatch(batch);
+                table.ExecuteBatchAsync(batch).Wait();
             }
         }
 
@@ -414,12 +407,11 @@ namespace NBitcoin.Indexer
         public void IndexChain(ChainBase chain)
         {
             if(chain == null)
-                throw new ArgumentNullException("chain");
-            SetThrottling();
+                throw new ArgumentNullException("chain");            
 
             using(IndexerTrace.NewCorrelation("Index main chain to azure started").Open())
             {
-                Configuration.GetChainTable().CreateIfNotExists();
+                Configuration.GetChainTable().CreateIfNotExistsAsync().Wait();
                 IndexerTrace.InputChainTip(chain.Tip);
                 var client = Configuration.CreateIndexerClient();
                 var changes = client.GetChainChangesUntilFork(chain.Tip, true).ToList();

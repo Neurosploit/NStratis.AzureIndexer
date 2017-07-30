@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -11,7 +12,7 @@ namespace NBitcoin.Indexer.Converters
     {
         public override bool CanConvert(Type objectType)
         {
-            return typeof(Script).IsAssignableFrom(objectType);
+            return typeof(Script).GetTypeInfo().IsAssignableFrom(objectType);
         }
 
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)

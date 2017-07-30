@@ -6,7 +6,6 @@ using NBitcoin.Protocol;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Runtime.ExceptionServices;
@@ -17,10 +16,10 @@ namespace NBitcoin.Indexer
 {
     public class IndexerConfiguration
     {
-        public static IndexerConfiguration FromConfiguration()
+        public static IndexerConfiguration FromConfiguration(string configurationFile)
         {
             IndexerConfiguration config = new IndexerConfiguration();
-            Fill(config);
+            Fill(config, configurationFile);
             return config;
         }
 
@@ -46,40 +45,48 @@ namespace NBitcoin.Indexer
             }
         }
 
-        protected static void Fill(IndexerConfiguration config)
+        protected static void Fill(IndexerConfiguration config, string configurationFile)
         {
-            var account = GetValue("Azure.AccountName", true);
-            var key = GetValue("Azure.Key", true);
+            var account = GetValue("Azure.AccountName", true, configurationFile);
+            var key = GetValue("Azure.Key", true, configurationFile);
             config.StorageCredentials = new StorageCredentials(account, key);
-            config.StorageNamespace = GetValue("StorageNamespace", false);
-            var network = GetValue("Bitcoin.Network", false) ?? "Main";            
+            config.StorageNamespace = GetValue("StorageNamespace", false, configurationFile);
+            var network = GetValue("Bitcoin.Network", false, configurationFile) ?? "Main";            
             if (network.ToLowerInvariant() == "stratismain")
                 config.Network = Network.StratisMain;
             else
                 config.Network = Network.GetNetwork(network);
             if (config.Network == null)
-                throw new ConfigurationErrorsException("Invalid value " + network + " in appsettings (expecting Main, Test or Seg)");
-            config.Node = GetValue("Node", false);
-            config.CheckpointSetName = GetValue("CheckpointSetName", false);
+                throw new InvalidOperationException("Invalid value " + network + " in appsettings (expecting Main, Test or Seg)");
+            config.Node = GetValue("Node", false, configurationFile);
+            config.CheckpointSetName = GetValue("CheckpointSetName", false, configurationFile);
             if (string.IsNullOrWhiteSpace(config.CheckpointSetName))
                 config.CheckpointSetName = "default";
 
-            var emulator = GetValue("AzureStorageEmulatorUsed", false);
+            var emulator = GetValue("AzureStorageEmulatorUsed", false, configurationFile);
             if(!string.IsNullOrWhiteSpace(emulator))
                 config.AzureStorageEmulatorUsed = bool.Parse(emulator);
         }
 
-        protected static string GetValue(string config, bool required)
+        protected static string GetValue(string config, bool required, string configurationFile)
         {
-            var result = ConfigurationManager.AppSettings[config];
+            if (!File.Exists(configurationFile))
+            {
+                throw new InvalidOperationException("Configuration file not found.");
+            }
+
+            var text = File.ReadAllText(configurationFile);
+            var dict = JsonConvert.DeserializeObject<Dictionary<string,string>>(text);
+
+            dict.TryGetValue(config, out string result);            
             result = String.IsNullOrWhiteSpace(result) ? null : result;
             if (result == null && required)
-                throw new ConfigurationErrorsException("AppSetting " + config + " not found");
+                throw new InvalidOperationException("AppSetting " + config + " not found");
             return result;
         }
         public IndexerConfiguration()
         {
-            Network = Network.Main;
+            Network = Network.Main;            
         }
         public Network Network
         {
@@ -101,7 +108,7 @@ namespace NBitcoin.Indexer
         public Node ConnectToNode(bool isRelay)
         {
             if (String.IsNullOrEmpty(Node))
-                throw new ConfigurationErrorsException("Node setting is not configured");
+                throw new InvalidOperationException("Node setting is not configured");
             var node = NBitcoin.Protocol.Node.Connect(Network, Node, isRelay: isRelay);
 
             // TODO: fullnode doesn't handle requesting data with TransactionOptions.All yet in their GetDataPayload methods. 
